@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <title>Lab 0</title>
+
+  <script id="vertex-shader" type="x-shader/x-vertex">
+
+    attribute  vec4 vPosition;
+    attribute  vec4 vColors;
+    varying vec4 fragColor;
+    uniform mat4 modelViewMatrix;
+    uniform mat4 projectionMatrix;
+    uniform vec3 theta;
+    uniform float coeff;
+    uniform vec3 trCoeff;
+    attribute  vec3 vNormal;
+    attribute  vec3 vNormal2;
+    attribute  vec3 vNormal3;
+    varying vec4 fColor;
+    uniform vec4 lightPosition;
+    uniform vec4 lightPosition2;
+    uniform vec4 lightPosition3;
+    uniform float shininess;
+    uniform float shininess2;
+    uniform float shininess3;
+    uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+    uniform vec4 ambientProduct2, diffuseProduct2, specularProduct2;
+    uniform vec4 ambientProduct3, diffuseProduct3, specularProduct3;
+    uniform mat4 modelView;
+    uniform mat4 projection;
+    vec3 angles = radians( theta );
+    void main() {
+      
+      vec3 angles = radians( theta );
+      vec3 c = cos( angles );
+      vec3 s = sin( angles );
+ 
+     
+      mat4 rx = mat4( 1.0,  0.0,  0.0, 0.0,
+      0.0,  c.x,  s.x, 0.0,
+      0.0, -s.x,  c.x, 0.0,
+      0.0,  0.0,  0.0, 1.0 );
+ 
+  mat4 ry = mat4( c.y, 0.0, -s.y, 0.0,
+      0.0, 1.0,  0.0, 0.0,
+      s.y, 0.0,  c.y, 0.0,
+      0.0, 0.0,  0.0, 1.0 );
+ 
+ 
+  mat4 rz = mat4( c.z, s.z, 0.0, 0.0,
+      -s.z,  c.z, 0.0, 0.0,
+      0.0,  0.0, 1.0, 0.0,
+      0.0,  0.0, 0.0, 1.0 );
+ 
+  mat4 sc = mat4(
+    coeff, 0, 0, 0,
+    0, coeff, 0, 0,
+    0, 0, coeff, 0,
+    0, 0, 0, 1
+  );
+ 
+  mat4 tr = mat4(
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    trCoeff.x, trCoeff.y, trCoeff.z, 1
+  );
+
+      vec3 pos = -(modelViewMatrix * vPosition).xyz;
+     
+    
+      //fixed light postion
+      
+      vec3 light = lightPosition.xyz;
+      vec3 light2 = lightPosition2.xyz;
+      vec3 light3 = lightPosition3.xyz;
+      float distance = length(light-pos);
+      float distance2 = length(light2-pos);
+      float distance3 = length(light3-pos);
+      vec3 L = normalize( light - pos );
+      vec3 L2 = normalize( light2 - pos );
+      vec3 L3 = normalize( light3 - pos );
+     
+    
+      vec3 E = normalize( -pos );
+      vec3 H = normalize( L + E );
+      vec3 E2 = normalize( -pos );
+      vec3 H2 = normalize( L2 + E2 );
+      vec3 E3 = normalize( -pos );
+      vec3 H3 = normalize( L3 + E3 );
+      
+      vec4 NN = vec4(vNormal,0);
+      
+  
+      // Transform vertex normal into eye coordinates
+         
+      vec3 N = normalize( (projectionMatrix*modelViewMatrix* tr * rz * ry * rx *sc *NN ).xyz);
+     
+  
+      // Compute terms in the illumination equation
+      vec4 ambient = ambientProduct;
+  
+      float Kd = max( dot(L, N), 0.0 )/distance;
+      float Kd2 = max( dot(L2, N), 0.0 )/distance2;
+      float Kd3 = max( dot(L3, N), 0.0 )/distance3;
+      vec4  diffuse = diffuseProduct*Kd + diffuseProduct2 * Kd2 + diffuseProduct3 *Kd3;
+  
+      float Ks = pow( max(dot(N, H), 0.0), shininess );
+      float Ks2 = pow( max(dot(N, H2), 0.0), shininess );
+      float Ks3 = pow( max(dot(N, H3), 0.0), shininess );
+      vec4  specular =(Ks * specularProduct )+ Ks2 * specularProduct2 + Ks3 * specularProduct3;
+  
+      if( dot(L, N) < 0.0 ) {
+    specular = vec4(0.0, 0.0, 0.0, 1.0);
+      } 
+
+    //fragColor = vColors;
+    gl_Position = projectionMatrix * modelViewMatrix*   tr * rz * ry * rx * sc * vPosition;
+    fragColor = (ambient + diffuse + specular);
+    
+    }
+  </script>
+
+  <script id="fragment-shader" type="x-shader/x-fragment">
+    precision mediump float;
+    varying vec4 fragColor;
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+    void main() {
+      gl_FragColor = vec4(fragColor);
+    }
+  </script>
+
+  <script type="text/javascript" src="webgl-utils.js"></script>
+  <script type="text/javascript" src="initShaders.js"></script>
+  <script type="text/javascript" src="MV.js"></script>
+  <script type="text/javascript" src="shape0.js"></script>
+</head>
+
+<body>
+  <p align="center">
+    <canvas id="gl-canvas" align="center" width="700" height="700" style="border: 1px solid black" ;>
+      Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+  </p>
+  <div align="center">
+    <input type="file" id="file-input" style="display:block; font-size: 15px; " />
+    <button id="load">Load Model</button>
+    <textbox id="loaded-text" placeholder="The contents of the file will be loaded here!"
+      style="width: 0px; height: 0px; margin-top: 0px;"></textbox>
+  </div>
+</body>
+
+<div align="center">
+  <button id="further" align="center">Further</button>
+  <button id="closer" align="center">Closer</button>
+  <button id="Button9" align="center">Add cube</button>
+  <button id="Button11" align="center">Add Pyramid</button>
+  <button id="Button12" align="center">Add Sphere</button>
+  <button id="Special" align="center">Add Special</button>
+  <!--
+  <button id="Button13" align="center">Add Cone</button>
+  //-->
+  <button id="Shine" align="center">Shine++</button>
+  <button id="Shine-" align="center">Shine--</button>
+  <select id="SelectObject" align="center"></select>
+  <select id="SelectColor" align="center">
+    <option>Default</option>
+    <option>Red</option>
+    <option>Green</option>
+    <option>Random</option>
+  </select>
+  <select id="SelectLight" align="center">
+    <option>Light 1</option>
+    <option>Light 2</option>
+    <option>Light 3</option>
+  </select>
+</div>
+<div align="center">
+
+  Near .01<input id="zNearSlider" type="range" min=".01" max="3" step="0.1" value="0.3" />
+  3
+</div>
+<div align="center">
+  Far 3<input id="zFarSlider" type="range" min="3" max="10" step="3.0" value="3" />
+  10
+</div>
+<div align="center">
+  Radius 0.05<input id="radiusSlider" type="range" min="0.05" max="10" step="0.1" value="4" />
+  10
+</div>
+<div align="center">
+  Theta -90<input id="thetaSlider" type="range" min="-90" max="90" step="5" value="0" />
+  90
+</div>
+<div align="center">
+  Phi -90<input id="phiSlider" type="range" min="-90" max="90" step="5" value="0" />
+  90
+</div>
+<div align="center">
+  FOV 10<input id="fovSlider" type="range" min="10" max="120" step="5" value="45" />
+  120
+</div>
+<div align="center">
+  Aspect Ratio 0.5<input id="aspectSlider" type="range" min="0.5" max="2" step="0.1" value="1" />
+  2
+</div>
+<div align="center">
+  LightX<input id="LightX" type="range" min="-2" max="2" step="0.1" value="0" />
+  1
+</div>
+<div align="center">
+  LightY<input id="LightY" type="range" min="-2" max="2" step="0.1" value="0" />
+  1
+</div>
+<div align="center">
+  LightZ<input id="LightZ" type="range" min="-6" max="6" step="0.1" value="0" />
+  1
+
+  <div align="center">
+    Specular
+    <input type="color" id="Specular" value="#ff0000">
+
+
+    Diffuse
+    <input type="color" id="Diffuse" value="#ff0000">
+    Material Diffuse
+    <input type="color" id="DiffuseMaterial" value="#ff0000">
+    Material Specular
+    <input type="color" id="SpecularMaterial" value="#ff0000">
+  </div>
+
+
+
+  <div align="center">
+    <button id="xButton" align="center">Rotate X</button>
+    <button id="yButton" align="center">Rotate Y</button>
+    <button id="zButton" align="center">Rotate Z</button>
+  </div>
+  <script type="text/javascript">
+    // putting a listener to the button html element, the listener catch the event of 'change'
+    // which happens when you pick a file
+
+  </script>
+
+</html>
