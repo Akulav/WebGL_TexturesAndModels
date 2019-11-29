@@ -13,17 +13,10 @@ var ctm;
 var ambientColor, diffuseColor, specularColor;
 var finalFileVertices;
 var finalFileNormals;
-//texture shit
-var fileVertices = [
-];
-var fileNormals = [
-];
-var fileFaces = [
-];
-var fileTextureCoord = [
-];
-//end of texture shit
-
+var fileVertices = [];
+var fileNormals = [];
+var fileFaces = [];
+var fileTextureCoord = [];
 var coordPP = [
   vec4(0.0, 0.0, 0.0, 1),
   vec4(0.154, 0.0, 0.0, 1),
@@ -45,30 +38,6 @@ var vertices = [
   vec4(0.5, 0.5, -0.5, 1.0),
   vec4(0.5, -0.5, -0.5, 1.0)
 ];
-
-//Cone
-
-var radiusC = 0.7;
-var angleDelta = 0.05;
-var verticesC = [];
-
-for (let angle = 0; angle <= 360; angle += 0) {
-
-  let point1 = vec3(radiusC * Math.cos(Math.PI * angle / 180), 0, radiusC * Math.sin(Math.PI * angle / 180))
-  angle += angleDelta;
-  let point2 = vec3(radiusC * Math.cos(Math.PI * angle / 180), 0, radiusC * Math.sin(Math.PI * angle / 180));
-
-  verticesC.push(point1)
-  verticesC.push(vec3(0, 0, 0))
-  verticesC.push(point2)
-
-  verticesC.push(point1)
-  verticesC.push(vec3(0, 0.9, 0))
-  verticesC.push(point2)
-}
-
-//end of cone
-//start of cube
 
 function hexToRgb(hex) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -113,9 +82,6 @@ function colorCube() {
   quad(5, 4, 0, 1);
 }
 colorCube();
-
-//end of cube
-//lightPyramid
 
 var indexPyramid = 0;
 var va = vec4(0.0, 0.0, -1.0, 1);
@@ -165,9 +131,6 @@ function tetrahedron(a, b, c, d, n) {
 }
 tetrahedron(va, vb, vc, vd, 0);
 
-//end of pyramid
-//sphere light
-
 var indexSphere = 0;
 var normalsArraySphere = [];
 var pointsArraySphere = [];
@@ -212,13 +175,7 @@ function tetrahedron2(a, b, c, d, n) {
 }
 tetrahedron2(va, vb, vc, vd, 8);
 
-//end sphere light
-//initialization
-
 window.onload = init;
-
-
-
 function normalizeDataFromFile(data) {
   const res = [];
   data.forEach((line) => {
@@ -272,20 +229,15 @@ function splitTextFromFile(text) {
 }
 
 function readTextFromFile(file) {
-  var reader = new FileReader(); // creating the object that will help us read the file
-  // setting a listener that will catch the 'load' event of reader functions		
+  var reader = new FileReader();
   reader.addEventListener('load', function (e) {
-    // when the contents are loaded --- execute all of these actions
     var text = e.target.result;
-    // console.log(text);
     splitTextFromFile(text);
   });
-  // listener for errors that may occur
   reader.addEventListener('error', function () {
     alert('File error happened!');
   });
-  // the readAsText function will get the plain text from the file
-  reader.readAsText(file); // when the function will complete execution, the 'load' event will fire
+  reader.readAsText(file);
 }
 function init() {
   canvas = document.getElementById("gl-canvas");
@@ -302,7 +254,7 @@ function init() {
       alert('Error : No file selected');
       return;
     }
-    var firstFile = selectedFiles[0]; // picking the first file from the selected ones
+    var firstFile = selectedFiles[0];
     readTextFromFile(firstFile);
   });
   document.addEventListener("keydown", keyDownTextField, false);
@@ -377,7 +329,7 @@ function init() {
     select.trCoeff[2] += 0.1;
   };
   document.getElementById("Button9").onclick = function () {
-    var cube = new Drawable(pointsArray, program, normalsArray, Light1, Light2, Light3, 1, fileFaces);
+    var cube = new Drawable(pointsArray, program, normalsArray, Light1, Light2, Light3, 0);
     toDraw.push(cube);
     select = cube;
     var selected = document.getElementById("SelectObject");
@@ -440,90 +392,17 @@ function init() {
     var e = document.getElementById("SelectObject");
     select = toDraw[e.selectedIndex];
   };
-  document.getElementById("SelectColor").onclick = function () {
-    var e = document.getElementById("SelectColor").value;
-
-    if (e == "Red") {
-      for (i = 0; i <= toDraw.length; i++) {
-        select = toDraw[i];
-        if (LightSelection == 0) {
-          Light1.lightDiffuse = vec4(0.6, 0.2, 0.2, 1)
-          Light1.lightSpecular = vec4(0.6, 0.2, 0.2, 1)
-          select.diffuseProduct = mult(Light1.lightDiffuse, select.materialDiffuse);
-          select.specularProduct = mult(Light1.lightSpecular, select.materialSpecular);
-        }
-        if (LightSelection == 1) {
-          Light2.lightDiffuse = vec4(0.6, 0.2, 0.2, 1)
-          Light2.lightSpecular = vec4(0.6, 0.2, 0.2, 1)
-          select.diffuseProduct = mult(Light2.lightDiffuse, select.materialDiffuse);
-          select.specularProduct = mult(Light2.lightSpecular, select.materialSpecular);
-        }
-        if (LightSelection == 2) {
-          Light3.lightDiffuse = vec4(0.6, 0.2, 0.2, 1)
-          Light3.lightSpecular = vec4(0.6, 0.2, 0.2, 1)
-          select.diffuseProduct = mult(Light3.lightDiffuse, select.materialDiffuse);
-          select.specularProduct = mult(Light3.lightSpecular, select.materialSpecular);
-        }
-      }
-    }
-    if (e == "Default") {
-      for (i = 0; i <= toDraw.length; i++) {
-        select = toDraw[i];
-        if (LightSelection == 0) {
-          Light1.lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
-          Light1.lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
-          select.diffuseProduct = mult(Light1.lightDiffuse, select.materialDiffuse);
-          select.specularProduct = mult(Light1.lightSpecular, select.materialSpecular);
-        }
-        if (LightSelection == 1) {
-          Light2.lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
-          Light2.lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
-          select.diffuseProduct = mult(Light2.lightDiffuse, select.materialDiffuse);
-          select.specularProduct = mult(Light2.lightSpecular, select.materialSpecular);
-        }
-        if (LightSelection == 2) {
-          Light3.lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
-          Light3.lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
-          select.diffuseProduct = mult(Light3.lightDiffuse, select.materialDiffuse);
-          select.specularProduct = mult(Light3.lightSpecular, select.materialSpecular);
-        }
-      }
-    }
-    if (e == "Green") {
-      select = toDraw[i];
-      if (LightSelection == 0) {
-        Light1.lightDiffuse = vec4(0.5, 0.6, 0.7, 1)
-        Light1.lightSpecular = vec4(0.5, 0.2, 0.7, 1)
-        select.diffuseProduct = mult(select.Light1.lightDiffuse, select.materialDiffuse);
-        select.specularProduct = mult(select.Light1.lightSpecular, select.materialSpecular);
-      }
-    }
-    if (e == "Random") {
-      for (i = 0; i <= toDraw.length; i++) {
-        select = toDraw[i];
-        select.lightDiffuse = vec4(Math.random() * 1 + 0, Math.random() * 1 + 0, Math.random() * 1 + 0, 1)
-        select.lightSpecular = vec4(Math.random() * 1 + 0, Math.random() * 1 + 0, Math.random() * 1 + 0, 1)
-        select.diffuseProduct = mult(select.lightDiffuse, select.materialDiffuse);
-        select.specularProduct = mult(select.lightSpecular, select.materialSpecular);
-      }
-    }
-
-  };
   document.getElementById("SelectLight").onclick = function () {
     var e = document.getElementById("SelectLight").value;
-
     if (e == "Light 1") {
       LightSelection = 0;
-      console.log("0")
     }
     if (e == "Light 2") {
       LightSelection = 1;
-      console.log("1")
     }
 
     if (e == "Light 3") {
       LightSelection = 2;
-      console.log("2")
     }
   };
 
@@ -534,15 +413,13 @@ function init() {
       select = toDraw[i];
       if (LightSelection == 0) {
         Light1.lightSpecular = spec;
-        select.specularProduct = mult(Light1.lightSpecular, toDraw[i].materialSpecular);
       }
       if (LightSelection == 1) {
         Light2.lightSpecular = spec;
-        select.specularProduct = mult(Light2.lightSpecular, select.materialSpecular);
       }
       if (LightSelection == 2) {
         Light3.lightSpecular = spec;
-        select.specularProduct = mult(Light3.lightSpecular, select.materialSpecular);
+
       }
     }
   };
@@ -554,15 +431,12 @@ function init() {
       select = toDraw[i];
       if (LightSelection == 0) {
         Light1.lightSpecular = diff;
-        select.specularProduct = mult(Light1.lightDiffuse, toDraw[i].materialDiffuse);
       }
       if (LightSelection == 1) {
         Light2.lightSpecular = diff;
-        select.specularProduct = mult(Light2.lightDiffuse, toDraw[i].materialDiffuse);
       }
       if (LightSelection == 2) {
         Light3.lightSpecular = diff;
-        select.specularProduct = mult(Light3.lightDiffuse, toDraw[i].materialDiffuse);
       }
     }
   };
@@ -573,9 +447,6 @@ function init() {
     for (i = 0; i <= toDraw.length; i++) {
       select = toDraw[i];
       toDraw[i].materialDiffuse = diff;
-      select.diffuseProduct = mult(Light1.lightDiffuse, toDraw[i].materialDiffuse);
-      select.diffuseProduct = mult(Light2.lightDiffuse, toDraw[i].materialDiffuse)
-      select.diffuseProduct = mult(Light3.lightDiffuse, toDraw[i].materialDiffuse)
     }
   }
   document.getElementById("SpecularMaterial").onchange = function () {
@@ -584,14 +455,8 @@ function init() {
     for (i = 0; i <= toDraw.length; i++) {
       select = toDraw[i];
       select.materialSpecular = diff;
-      select.specularProduct = mult(Light1.lightSpecular, toDraw[i].materialSpecular);
-      select.specularProduct = mult(Light2.lightSpecular, toDraw[i].materialSpecular)
-      select.specularProduct = mult(Light3.lightSpecular, toDraw[i].materialSpecular)
     }
   }
-
-
-
 
   document.getElementById("xButton").onclick = function () {
     select.axis = select.xAxis;
@@ -643,17 +508,12 @@ function init() {
   document.getElementById("LightX").onchange = function (event) {
     toDraw.forEach(element => {
       if (LightSelection == 0) {
-        console.log("1")
-        console.log(Light1.lightPosition);
-        console.log(Light2.lightPosition);
         Light1.lightPosition[0] = event.target.value;
       }
       else if (LightSelection == 1) {
-        console.log("2")
         Light2.lightPosition[0] = event.target.value;
       }
       else if (LightSelection == 2) {
-        console.log("3")
         Light3.lightPosition[0] = event.target.value;
       }
     })
@@ -661,17 +521,12 @@ function init() {
   document.getElementById("LightY").onchange = function (event) {
     toDraw.forEach(element => {
       if (LightSelection == 0) {
-        console.log("1")
-        console.log(Light1.lightPosition);
-        console.log(Light2.lightPosition);
         Light1.lightPosition[1] = event.target.value;
       }
       else if (LightSelection == 1) {
-        console.log("2")
         Light2.lightPosition[1] = event.target.value;
       }
       else if (LightSelection == 2) {
-        console.log("3")
         Light3.lightPosition[1] = event.target.value;
       }
     })
@@ -679,52 +534,28 @@ function init() {
   document.getElementById("LightZ").onchange = function (event) {
     toDraw.forEach(element => {
       if (LightSelection == 0) {
-        console.log("1")
-        console.log(Light1.lightPosition);
-        console.log(Light2.lightPosition);
         Light1.lightPosition[2] = event.target.value;
       }
       else if (LightSelection == 1) {
-        console.log("2")
         Light2.lightPosition[2] = event.target.value;
       }
       else if (LightSelection == 2) {
-        console.log("3")
         Light3.lightPosition[2] = event.target.value;
       }
     })
   };
-  //texture shit
-  let obj;
-
   document.getElementById("load").onclick = function () {
-    var cube = new Drawable(finalFileVertices, program, finalFileNormals, Light1, Light2, Light3, 1, fileFaces);
-    toDraw.push(cube);
-    select = cube;
+    var model = new Drawable(finalFileVertices, program, finalFileNormals, Light1, Light2, Light3, 0);
+    toDraw.push(model);
+    select = model;
     var selected = document.getElementById("SelectObject");
     var opt = toDraw[i];
     var el = document.createElement("option");
-    el.textContent = "Cube" + i;
+    el.textContent = "model" + i;
     el.value = opt;
     selected.appendChild(el);
-
     i++;
   }
-  ////
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   render();
 }
 
@@ -751,7 +582,7 @@ let Lights = [{ Light1 }, { Light2 }, { Light3 }];
 let LightSelection = 0;
 
 class Drawable {
-  constructor(vertices, program, normalsArray, Light1, Light2, Light3, number, indices) {
+  constructor(vertices, program, normalsArray, Light1, Light2, Light3, number) {
     this.program = program;
     this.normalsArray = normalsArray;
     this.indexPyramid = indexPyramid;
@@ -759,7 +590,6 @@ class Drawable {
     this.Light2 = Light2;
     this.Light3 = Light3;
     this.number = number;
-    this.indices = indices;
     this.vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
@@ -767,7 +597,7 @@ class Drawable {
         this.cBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
-        */
+     */
     this.nBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
@@ -775,10 +605,6 @@ class Drawable {
     this.vNormal = gl.getAttribLocation(this.program, "vNormal");
     gl.vertexAttribPointer(this.vNormal, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(this.vNormal);
-
-    this.index_buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
 
     this.vAttributeLocation = gl.getAttribLocation(program, 'vPosition');
     //this.cAttributeLocation = gl.getAttribLocation(program, 'vColors');
@@ -821,9 +647,6 @@ class Drawable {
     this.viewerPos = viewerPos;
     this.viewerPos = vec3(0.0, 0.0, -20.0);
     this.projection = ortho(-1, 1, -1, 1, -100, 100);
-    console.log(this.vertices)
-    console.log(this.normalsArray)
-    //this.indices = [0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 2, 4, 7, 7, 3, 2, 1, 5, 4, 4, 2, 1, 0, 6, 5, 5, 1, 0, 3, 7, 6, 6, 0, 3];
   }
   draw() {
     this.ambientProduct = mult(this.lightAmbient, this.materialAmbient);
@@ -841,18 +664,12 @@ class Drawable {
     gl.enableVertexAttribArray(this.vAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
 
-    this.index_buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
-    /*
     if (this.number == 1) {
-
-      this.vertices.length == 36 ? gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0) : gl.vertexAttribPointer(this.vNormal, 4, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(this.vNormal, 4, gl.FLOAT, false, 0, 0);
     }
-    else
-      this.vertices.length == 36 ? gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0) : gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0)
-      */
-    gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0)
+    if (this.number == 0) {
+      gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0);
+    }
     gl.enableVertexAttribArray(this.vNormal);
     //gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
     //gl.vertexAttribPointer(this.cAttributeLocation, 4, gl.FLOAT, false, 0, 0); // DESCRIBE THE DATA: EACH vertex has 4 values of type FLOAT
@@ -886,7 +703,5 @@ class Drawable {
     gl.uniformMatrix4fv(this.projectionMatrixLoc, false, flatten(this.projectionMatrix));
     gl.uniform1f(this.coeffLoc, this.coeff);
     gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length);
-
-    //gl.drawElements(gl.TRIANGLES, this.index_buffer.length, gl.UNSIGNED_SHORT, 0);
   }
 }

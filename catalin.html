@@ -36,8 +36,7 @@
       vec3 angles = radians( theta );
       vec3 c = cos( angles );
       vec3 s = sin( angles );
- 
-     
+
       mat4 rx = mat4( 1.0,  0.0,  0.0, 0.0,
       0.0,  c.x,  s.x, 0.0,
       0.0, -s.x,  c.x, 0.0,
@@ -82,44 +81,29 @@
       vec3 L = normalize( light - pos );
       vec3 L2 = normalize( light2 - pos );
       vec3 L3 = normalize( light3 - pos );
-     
-    
       vec3 E = normalize( -pos );
       vec3 H = normalize( L + E );
       vec3 E2 = normalize( -pos );
       vec3 H2 = normalize( L2 + E2 );
       vec3 E3 = normalize( -pos );
       vec3 H3 = normalize( L3 + E3 );
-      
       vec4 NN = vec4(vNormal,0);
-      
-  
-      // Transform vertex normal into eye coordinates
-         
       vec3 N = normalize( (projectionMatrix*modelViewMatrix* tr * rz * ry * rx *sc *NN ).xyz);
-     
-  
-      // Compute terms in the illumination equation
       vec4 ambient = ambientProduct;
-  
       float Kd = max( dot(L, N), 0.0 )/distance;
       float Kd2 = max( dot(L2, N), 0.0 )/distance2;
       float Kd3 = max( dot(L3, N), 0.0 )/distance3;
       vec4  diffuse = diffuseProduct*Kd + diffuseProduct2 * Kd2 + diffuseProduct3 *Kd3;
-  
       float Ks = pow( max(dot(N, H), 0.0), shininess );
       float Ks2 = pow( max(dot(N, H2), 0.0), shininess );
       float Ks3 = pow( max(dot(N, H3), 0.0), shininess );
       vec4  specular =(Ks * specularProduct )+ Ks2 * specularProduct2 + Ks3 * specularProduct3;
-  
       if( dot(L, N) < 0.0 ) {
     specular = vec4(0.0, 0.0, 0.0, 1.0);
       } 
-
     //fragColor = vColors;
     gl_Position = projectionMatrix * modelViewMatrix*   tr * rz * ry * rx * sc * vPosition;
     fragColor = (ambient + diffuse + specular);
-    
     }
   </script>
 
@@ -159,9 +143,6 @@
   <button id="Button11" align="center">Add Pyramid</button>
   <button id="Button12" align="center">Add Sphere</button>
   <button id="Special" align="center">Add Special</button>
-  <!--
-  <button id="Button13" align="center">Add Cone</button>
-  //-->
   <button id="Shine" align="center">Shine++</button>
   <button id="Shine-" align="center">Shine--</button>
   <select id="SelectObject" align="center"></select>
@@ -178,7 +159,6 @@
   </select>
 </div>
 <div align="center">
-
   Near .01<input id="zNearSlider" type="range" min=".01" max="3" step="0.1" value="0.3" />
   3
 </div>
@@ -217,12 +197,9 @@
 <div align="center">
   LightZ<input id="LightZ" type="range" min="-6" max="6" step="0.1" value="0" />
   1
-
   <div align="center">
     Specular
     <input type="color" id="Specular" value="#ff0000">
-
-
     Diffuse
     <input type="color" id="Diffuse" value="#ff0000">
     Material Diffuse
@@ -230,18 +207,12 @@
     Material Specular
     <input type="color" id="SpecularMaterial" value="#ff0000">
   </div>
-
-
-
   <div align="center">
     <button id="xButton" align="center">Rotate X</button>
     <button id="yButton" align="center">Rotate Y</button>
     <button id="zButton" align="center">Rotate Z</button>
   </div>
   <script type="text/javascript">
-    // putting a listener to the button html element, the listener catch the event of 'change'
-    // which happens when you pick a file
-
   </script>
 
 </html>
