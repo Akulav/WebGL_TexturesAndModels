@@ -11,30 +11,17 @@ var aspect;
 var viewerPos;
 var ctm;
 var ambientColor, diffuseColor, specularColor;
-
+var finalFileVertices;
+var finalFileNormals;
 //texture shit
 var fileVertices = [
-  vec3(-1.0000, -1.0000, 1.0000),
-  vec3(1.0000, -1.0000, 1.0000),
-  vec3(1.0000, 1.0000, 1.0000),
-  vec3(-1.0000, 1.0000, 1.0000),
-  vec3(1.0000, 1.0000, -1.0000),
-  vec3(1.0000, -1.0000, -1.0000),
-  vec3(1.0000, -1.0000, -1.0000),
-  vec3(-1.0000, 1.0000, -1.0000)
-
 ];
 var fileNormals = [
-  vec3(0.0000, 0.0000, 1.0000),
-  vec3(0.0000, 0.0000, -1.0000),
-  vec3(0.0000, 1.0000, -0.0000),
-  vec3(1.0000, 0.0000, -0.0000),
-  vec3(0.0000, -1.0000, -0.0000),
-  vec3(-1.0000, 0.0000, -0.0000)
-
 ];
-var fileFaces = [];
-var fileTextureCoord = [];
+var fileFaces = [
+];
+var fileTextureCoord = [
+];
 //end of texture shit
 
 var coordPP = [
@@ -229,6 +216,77 @@ tetrahedron2(va, vb, vc, vd, 8);
 //initialization
 
 window.onload = init;
+
+
+
+function normalizeDataFromFile(data) {
+  const res = [];
+  data.forEach((line) => {
+    line.split(' ').slice(-3).forEach((element) => {
+      res.push(parseFloat(element));
+    });
+  })
+  return res;
+}
+
+function processFacesFromFile(faces, vertices, normals, texture) {
+  const finalVertices = [];
+  const finalNormals = [];
+  faces.forEach((face) => {
+    face.trim().split(' ').slice(-3).forEach((element) => {
+      const line = element.split('/').map((element) => parseInt(element) - 1);
+      finalVertices.push(vec4(vertices[line[0] * 3], vertices[line[0] * 3 + 1], vertices[line[0] * 3 + 2], 1));
+      finalNormals.push(vec3(normals[line[0] * 3], normals[line[0] * 3 + 1], normals[line[0] * 3 + 2]))
+    });
+  });
+
+  finalFileVertices = finalVertices;
+  finalFileNormals = finalNormals;
+}
+
+function splitTextFromFile(text) {
+  const lines = text.split(/\r?\n/).filter(line => line[0] === 'v' || line[0] === 'f');;
+  const vertices = [];
+  const normals = [];
+  const texture = [];
+  const faces = [];
+  lines.forEach((line) => {
+    if (line.startsWith('f')) {
+      faces.push(line);
+    }
+    else if (line.startsWith('vn')) {
+      normals.push(line);
+    }
+    else if (line.startsWith('vt')) {
+      texture.push(line);
+    }
+    else if (line.startsWith('v')) {
+      vertices.push(line);
+    }
+  })
+  fileVertices = normalizeDataFromFile(vertices);
+  fileNormals = normalizeDataFromFile(normals);
+  fileTextureCoord = normalizeDataFromFile(texture)
+  fileFaces = processFacesFromFile(faces, fileVertices, fileNormals, fileTextureCoord);
+
+}
+
+function readTextFromFile(file) {
+  var reader = new FileReader(); // creating the object that will help us read the file
+  // setting a listener that will catch the 'load' event of reader functions		
+  reader.addEventListener('load', function (e) {
+    // when the contents are loaded --- execute all of these actions
+    var text = e.target.result;
+    // console.log(text);
+    splitTextFromFile(text);
+  });
+  // listener for errors that may occur
+  reader.addEventListener('error', function () {
+    alert('File error happened!');
+  });
+  // the readAsText function will get the plain text from the file
+  reader.readAsText(file); // when the function will complete execution, the 'load' event will fire
+}
 function init() {
   canvas = document.getElementById("gl-canvas");
   gl = WebGLUtils.setupWebGL(canvas);
@@ -238,31 +296,15 @@ function init() {
   gl.useProgram(program);
   gl.enable(gl.DEPTH_TEST);
 
-  var bufferId = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-  gl.bufferData(gl.ARRAY_BUFFER, 9000000, gl.STATIC_DRAW);
-  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(vertices));
-
-  var vPosition = gl.getAttribLocation(program, "vPosition");
-  gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(vPosition);
-
-  var nBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
-
-  var vNormal = gl.getAttribLocation(program, "vNormal");
-  gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(vNormal);
-  /*
-    var bufferColor = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferColor);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-  
-    var vColors = gl.getAttribLocation(program, "vColors");
-    gl.vertexAttribPointer(vColors, 4, gl.FLOAT, false, 4 * Float32Array.BYTES_PER_ELEMENT, 0);
-    gl.enableVertexAttribArray(vColors);
-  */
+  document.getElementById("file-input").addEventListener('change', function () {
+    var selectedFiles = this.files;
+    if (selectedFiles.length == 0) {
+      alert('Error : No file selected');
+      return;
+    }
+    var firstFile = selectedFiles[0]; // picking the first file from the selected ones
+    readTextFromFile(firstFile);
+  });
   document.addEventListener("keydown", keyDownTextField, false);
   function keyDownTextField(e) {
     var keyCode = e.keyCode;
@@ -335,7 +377,7 @@ function init() {
     select.trCoeff[2] += 0.1;
   };
   document.getElementById("Button9").onclick = function () {
-    var cube = new Drawable(pointsArray, program, normalsArray, Light1, Light2, Light3, 1);
+    var cube = new Drawable(pointsArray, program, normalsArray, Light1, Light2, Light3, 1, fileFaces);
     toDraw.push(cube);
     select = cube;
     var selected = document.getElementById("SelectObject");
@@ -656,7 +698,7 @@ function init() {
   let obj;
 
   document.getElementById("load").onclick = function () {
-    var cube = new Drawable(fileVertices, program, fileNormals, Light1, Light2, Light3, 1);
+    var cube = new Drawable(finalFileVertices, program, finalFileNormals, Light1, Light2, Light3, 1, fileFaces);
     toDraw.push(cube);
     select = cube;
     var selected = document.getElementById("SelectObject");
@@ -665,51 +707,23 @@ function init() {
     el.textContent = "Cube" + i;
     el.value = opt;
     selected.appendChild(el);
+
     i++;
   }
+  ////
 
-  document.querySelector("#file-input").addEventListener('change', function () {
-    var selectedFiles = this.files;
-    if (selectedFiles.length == 0) {
-      alert('Error : No file selected');
-      return;
-    }
-    var firstFile = selectedFiles[0]; // picking the first file from the selected ones
-    readTextFromFile(firstFile);
-  });
 
-  function readTextFromFile(file) {
-    var reader = new FileReader(); // creating the object that will help us read the file
-    // setting a listener that will catch the 'load' event of reader functions		
-    reader.addEventListener('load', function (e) {
-      // when the contents are loaded --- execute all of these actions
-      var text = e.target.result;
-      obj = text;
 
-      console.log(obj);
-      readData(obj);
-      document.querySelector("#loaded-text").value = text;
-    });
-    // listener for errors that may occur
-    reader.addEventListener('error', function () {
-      alert('File error happened!');
-    });
-    // the readAsText function will get the plain text from the file
-    reader.readAsText(file); // when the function will complete execution, the 'load' event will fire
 
-  }
-  //end of texture shit.
 
-  function readData(data) {
-    let start = 0;
-    let control = '';
-    for (i = 0; i < data.length; i++) {
-      if (data[i] == 'v') { start = i; break; console.log("haha") }
-    }
-    console.log(start);
-    console.log(data[0])
 
-  }
+
+
+
+
+
+
+
 
   render();
 }
@@ -737,7 +751,7 @@ let Lights = [{ Light1 }, { Light2 }, { Light3 }];
 let LightSelection = 0;
 
 class Drawable {
-  constructor(vertices, program, normalsArray, Light1, Light2, Light3, number) {
+  constructor(vertices, program, normalsArray, Light1, Light2, Light3, number, indices) {
     this.program = program;
     this.normalsArray = normalsArray;
     this.indexPyramid = indexPyramid;
@@ -745,6 +759,7 @@ class Drawable {
     this.Light2 = Light2;
     this.Light3 = Light3;
     this.number = number;
+    this.indices = indices;
     this.vBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
@@ -760,6 +775,10 @@ class Drawable {
     this.vNormal = gl.getAttribLocation(this.program, "vNormal");
     gl.vertexAttribPointer(this.vNormal, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(this.vNormal);
+
+    this.index_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
 
     this.vAttributeLocation = gl.getAttribLocation(program, 'vPosition');
     //this.cAttributeLocation = gl.getAttribLocation(program, 'vColors');
@@ -795,8 +814,6 @@ class Drawable {
     this.materialDiffuse = vec4(1.0, 0.8, 0.0, 1.0);
     this.materialSpecular = vec4(1.0, 0.8, 0.0, 1.0);
     this.materialShininess = 100;
-    //
-    //
     this.ctm = ctm;
     this.ambientColor = ambientColor;
     this.diffuseColor = diffuseColor;
@@ -804,9 +821,9 @@ class Drawable {
     this.viewerPos = viewerPos;
     this.viewerPos = vec3(0.0, 0.0, -20.0);
     this.projection = ortho(-1, 1, -1, 1, -100, 100);
-
-
-
+    console.log(this.vertices)
+    console.log(this.normalsArray)
+    //this.indices = [0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 2, 4, 7, 7, 3, 2, 1, 5, 4, 4, 2, 1, 0, 6, 5, 5, 1, 0, 3, 7, 6, 6, 0, 3];
   }
   draw() {
     this.ambientProduct = mult(this.lightAmbient, this.materialAmbient);
@@ -823,12 +840,19 @@ class Drawable {
     gl.vertexAttribPointer(this.vAttributeLocation, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(this.vAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.nBuffer);
+
+    this.index_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
+    /*
     if (this.number == 1) {
 
       this.vertices.length == 36 ? gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0) : gl.vertexAttribPointer(this.vNormal, 4, gl.FLOAT, false, 0, 0);
     }
     else
       this.vertices.length == 36 ? gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0) : gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0)
+      */
+    gl.vertexAttribPointer(this.vNormal, 3, gl.FLOAT, false, 0, 0)
     gl.enableVertexAttribArray(this.vNormal);
     //gl.bindBuffer(gl.ARRAY_BUFFER, this.cBuffer);
     //gl.vertexAttribPointer(this.cAttributeLocation, 4, gl.FLOAT, false, 0, 0); // DESCRIBE THE DATA: EACH vertex has 4 values of type FLOAT
@@ -862,5 +886,7 @@ class Drawable {
     gl.uniformMatrix4fv(this.projectionMatrixLoc, false, flatten(this.projectionMatrix));
     gl.uniform1f(this.coeffLoc, this.coeff);
     gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length);
+
+    //gl.drawElements(gl.TRIANGLES, this.index_buffer.length, gl.UNSIGNED_SHORT, 0);
   }
 }
