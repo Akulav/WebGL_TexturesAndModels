@@ -456,7 +456,7 @@ function readTextFromFile(file) {
 
     reader.readAsText(file);
 }
-
+let test = 0;
 function setLoadTextureListener() {
     document.querySelectorAll('.texture').forEach(function (button) {
         button.addEventListener('change', function () {
@@ -467,6 +467,7 @@ function setLoadTextureListener() {
                 return;
             }
             var firstFile = selectedFiles[0];
+            if (firstFile.name == "cube.jpg") { test = 1; }
             readImageFromFile(firstFile, textureNumber);
         });
     });
@@ -509,6 +510,37 @@ function loadTexture(gl, dataRaw, activeTextureNumber) {
     return texture;
 }
 
+function Sound(source, volume, loop) {
+    this.source = source;
+    this.volume = volume;
+    this.loop = loop;
+    var son;
+    this.son = son;
+    this.finish = false;
+    this.stop = function () {
+        document.body.removeChild(this.son);
+    }
+    this.start = function () {
+        if (this.finish) return false;
+        this.son = document.createElement("embed");
+        this.son.setAttribute("src", this.source);
+        this.son.setAttribute("hidden", "true");
+        this.son.setAttribute("volume", this.volume);
+        this.son.setAttribute("autostart", "true");
+        this.son.setAttribute("loop", this.loop);
+        document.body.appendChild(this.son);
+    }
+    this.remove = function () {
+        document.body.removeChild(this.son);
+        this.finish = true;
+    }
+    this.init = function (volume, loop) {
+        this.finish = false;
+        this.volume = volume;
+        this.loop = loop;
+    }
+}
+
 function init() {
     canvas = document.getElementById("gl-canvas");
 
@@ -540,19 +572,36 @@ function init() {
 
     document.getElementById("load").onclick = function () {
         addFigure('fileShape', program);
+
     }
 
     document.getElementById("xButton").onclick = function () {
         axis = xAxis;
         enableRotation = true;
+        if (test == 1) {
+            var foo = new Sound("sound.mp3", 100, true);
+            foo.start();
+            test = 0;
+        }
     };
     document.getElementById("yButton").onclick = function () {
         axis = yAxis;
         enableRotation = true;
+
+        if (test == 1) {
+            var foo = new Sound("sound.mp3", 100, true);
+            foo.start();
+            test = 0;
+        }
     };
     document.getElementById("zButton").onclick = function () {
         axis = zAxis;
         enableRotation = true;
+        if (test == 1) {
+            var foo = new Sound("sound.mp3", 100, true);
+            foo.start();
+            test = 0;
+        }
     };
 
     let p = 0;
